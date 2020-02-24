@@ -1,7 +1,8 @@
 const express = require("express");
-const request = require("request");
-const bodyParser = require("body-parse")
+const axios = require("axios");
+const bodyParser = require('body-parser')
 const app = express();
+
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get("/", function(req, res){
@@ -9,26 +10,32 @@ app.get("/", function(req, res){
 });
 
 app.post("/", function(req, res){
+    let enterbit = Number(req.body.enterbit);
     let currency = req.body.currency;
     let url = `https://api.coindesk.com/v1/bpi/currentprice/${currency}.json`;
-    
-    request(url, function(error, response, body){
-        console.log("Server status code ", response.statusCode);
+
+    axios.get(url).then(function(response){
+        let price;
+
+        console.log("Server status code " , response.status);
         //console.log(response);
 
-        let data = JSON.parse(response.body);
-
         if(currency === "EUR"){
-            price = data.bpi.EUR.rate_float;
-            console.log(price);
-        }else {
-            price = data.bpi.USD.rate_float;
-            console.log(price);
+            price = response.data.bpi.EUR.rate_float;
+            res.send(
+                `Bitcoin EUR rate: <b>${price}</b>
+                <br>The indicated number of bitcoins: <b>${enterbit}</b>
+                <br>Calculator Results: <b>${price*enterbit} EUR </b>`
+            );
+        }else{
+            price = response.data.bpi.USD.rate_float;
+            res.send(
+                `Bitcoin USD rate: <b>${price}</b>
+                <br>The indicated number of bitcoins: <b>${enterbit}</b>
+                <br>Calculator Results: <b>${price*enterbit} USD </b>`
+            );
         }
-
     });
-
-    //console.log(currency);
 });
 
 app.listen(3000, function(){
